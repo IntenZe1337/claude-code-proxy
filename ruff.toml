@@ -1,0 +1,6 @@
+# Vendorat tredjepartsrepo (jodavan/claude-code-proxy) med lokala patchar.
+# Radlängd är upstream-stil; kritisk subset räcker som golv här.
+line-length = 160
+
+[lint]
+select = ["E9", "F63", "F7", "F82"]

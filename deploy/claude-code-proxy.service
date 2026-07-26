@@ -1,0 +1,15 @@
+[Unit]
+Description=Claude Code proxy (Haiku -> DeepSeek V4 Pro)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/rasmus/dev/claude-code-proxy
+EnvironmentFile=/home/rasmus/dev/claude-code-proxy/.env
+ExecStart=/home/rasmus/dev/claude-code-proxy/.venv/bin/python /home/rasmus/dev/claude-code-proxy/proxy.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

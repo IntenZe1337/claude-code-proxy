@@ -42,7 +42,6 @@ import os
 import logging
 import asyncio
 import random
-from pathlib import Path
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -101,6 +100,7 @@ SONNET_BASE_URL = os.getenv("SONNET_PROVIDER_BASE_URL")
 
 ANTHROPIC_BASE_URL = "https://api.anthropic.com"
 PORT = int(os.getenv("PORT", "8082"))
+HOST = os.getenv("HOST", "0.0.0.0")
 
 # Model tier detection - read from Claude Code env vars
 HAIKU_MODEL = os.getenv("ANTHROPIC_DEFAULT_HAIKU_MODEL", "claude-3-haiku")
@@ -119,17 +119,46 @@ opus_semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 sonnet_semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 
 
+# httpx dekomprimerar svarskroppen åt oss, så upstreams content-encoding och
+# content-length beskriver inte längre det vi skickar vidare. Skickas de med
+# försöker klienten gunzip:a klartext och faller (CURLE_BAD_CONTENT_ENCODING).
+HOP_BY_HOP_HEADERS = frozenset({
+    "content-encoding",
+    "content-length",
+    "transfer-encoding",
+    "connection",
+    "keep-alive",
+})
+
+
+def passthrough_headers(headers) -> dict:
+    """Upstream-headers minus de som beskriver den komprimerade transporten."""
+    return {k: v for k, v in headers.items() if k.lower() not in HOP_BY_HOP_HEADERS}
+
+
+def normalize_model_name(model_name: str) -> str:
+    """Claude Code strips [1m] before sending; match either form."""
+    if model_name.endswith("[1m]"):
+        return model_name[:-4]
+    return model_name
+
+
 def get_provider_config(model_name: str):
     """
     Determine which provider to route to based on model name.
     Returns (api_key, base_url, provider_name, semaphore) or None for OAuth passthrough.
     """
+    normalized = normalize_model_name(model_name)
+    haiku_model = normalize_model_name(HAIKU_MODEL)
+    opus_model = normalize_model_name(OPUS_MODEL)
+    sonnet_model = normalize_model_name(SONNET_MODEL)
+
     # Check if model matches configured tier models
-    if model_name == HAIKU_MODEL and HAIKU_BASE_URL:
+    if normalized == haiku_model and HAIKU_BASE_URL:
         return (HAIKU_API_KEY, HAIKU_BASE_URL, "Haiku Provider", haiku_semaphore)
-    elif model_name == OPUS_MODEL and OPUS_BASE_URL:
+    elif normalized == opus_model and OPUS_BASE_URL:
         return (OPUS_API_KEY, OPUS_BASE_URL, "Opus Provider", opus_semaphore)
-    elif model_name == SONNET_MODEL and SONNET_BASE_URL:
+    elif normalized == sonnet_model and SONNET_BASE_URL:
         return (SONNET_API_KEY, SONNET_BASE_URL, "Sonnet Provider", sonnet_semaphore)
 
     # Default to OAuth passthrough (real Anthropic) - no semaphore needed
@@ -285,7 +314,7 @@ async def proxy_messages(request: Request):
                     return Response(
                         content=response.content,
                         status_code=response.status_code,
-                        headers=dict(response.headers)
+                        headers=passthrough_headers(response.headers)
                     )
 
             except httpx.ReadTimeout:
@@ -414,7 +443,7 @@ async def proxy_count_tokens(request: Request):
                 return Response(
                     content=response.content,
                     status_code=response.status_code,
-                    headers=dict(response.headers)
+                    headers=passthrough_headers(response.headers)
                 )
 
             except httpx.ReadTimeout:
@@ -520,4 +549,4 @@ if __name__ == "__main__":
     print(f"Starting proxy on http://localhost:{PORT}")
     print("=" * 80)
 
-    uvicorn.run(app, host="0.0.0.0", port=PORT, log_level="info")
+    uvicorn.run(app, host=HOST, port=PORT, log_level="info")
