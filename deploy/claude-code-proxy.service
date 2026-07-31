@@ -1,5 +1,5 @@
 [Unit]
-Description=Claude Code proxy (Haiku -> DeepSeek V4 Pro)
+Description=Claude Code proxy (Haiku -> DeepSeek V4 Flash)
 After=network-online.target
 Wants=network-online.target
 

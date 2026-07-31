@@ -1,5 +1,5 @@
 @echo off
-REM Startar Claude Code-proxyn (Haiku-tier -> DeepSeek V4 Pro).
+REM Startar Claude Code-proxyn (Haiku-tier -> DeepSeek V4 Flash).
 REM Windows-motsvarighet till claude-code-proxy.service pa Hetzner.
 REM Startas av schemalagd uppgift "claude-code-proxy"; loggen skrivs om vid varje start.
 REM Startbannern innehaller pilar (U+2192). Utan detta blir stdout cp1252
