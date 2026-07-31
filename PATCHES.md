@@ -42,11 +42,41 @@ Kandidat att skicka uppströms som PR.
 
 | Fil | Syfte |
 |---|---|
-| `start-proxy.cmd` | Windows-start. Sätter `PYTHONUTF8`/`PYTHONIOENCODING` — utan dem blir stdout cp1252 vid omdirigering till fil och processen dör på `UnicodeEncodeError` för pilarna (U+2192) i startbannern. Registreras som schemalagd uppgift `claude-code-proxy`. |
+| `start-proxy.cmd` | Windows-start. Sätter `PYTHONUTF8`/`PYTHONIOENCODING` — utan dem blir stdout cp1252 vid omdirigering till fil och processen dör på `UnicodeEncodeError` för pilarna (U+2192) i startbannern. Dödar även kvarvarande lyssnare på 8082 före start, se nedan. Registreras som schemalagd uppgift `claude-code-proxy`. |
 | `deploy/claude-code-proxy.service` | systemd `--user`-unit för Hetzner. |
 | `ruff.toml` | Vendorat repo i upstream-stil; kritisk subset (`E9,F63,F7,F82`) som golv, `line-length = 160`. |
 
 `.env` är gitignorerad och innehåller providerns API-nyckel. Se `.env.example`
 för formatet.
 
-Senast uppdaterad: 2026-07-26.
+## Driftfälla på Windows: föräldralös process håller porten
+
+Den schemalagda uppgiften kör som `Gabri` med LogonType S4U, vilket placerar
+python-processen i **session 0**. `Stop-ScheduledTask` dödar `cmd`-wrappern men
+inte det detacherade python-barnet. Den föräldralösa processen behåller port
+8082, den nya instansen kan inte binda och dör direkt — medan den gamla
+fortsätter svara på `/health` med **föråldrad** konfiguration. En ändring i
+`.env` ser då ut att inte ha tagit, utan att något felmeddelande visas.
+
+Felet är tyst i tre lager samtidigt:
+
+- `Get-ScheduledTaskInfo` visar `LastTaskResult=1`, men uppgiften rapporteras
+  ändå som `Running` eftersom wrappern lever.
+- `proxy.log` trunkeras av `>`-omdirigeringen vid varje start, medan den gamla
+  processen fortsätter skriva på sin egen filoffset — loggen ser färsk ut men
+  innehåller den gamla processens banner.
+- Från en interaktiv session (session 1, medium integrity) går processen inte
+  att döda: både `Stop-Process` och `taskkill /F` ger `Åtkomst nekad`. Manuell
+  åtgärd kräver elevering.
+
+`start-proxy.cmd` dödar därför kvarvarande lyssnare på 8082 före start. Det
+fungerar utan elevering eftersom skriptet körs i taskens egen session 0-kontext.
+Filtret kräver **både** `LISTENING` och `":8082 "`: lyssnarraden har foreign
+address `0.0.0.0:0`, så mönstret kan då bara träffa lokal adress. Utan
+`LISTENING`-filtret hade etablerade klientanslutningar *mot* proxyn matchat och
+anroparen dödats i stället.
+
+Hetzner är inte drabbad — där körs proxyn av en `systemd --user`-unit som
+hanterar processträdet korrekt vid `restart`.
+
+Senast uppdaterad: 2026-07-31.
