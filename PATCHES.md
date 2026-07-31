@@ -49,6 +49,30 @@ Kandidat att skicka uppströms som PR.
 `.env` är gitignorerad och innehåller providerns API-nyckel. Se `.env.example`
 för formatet.
 
+### `README.md` och `.env.example` speglar inte vår konfiguration
+
+Båda är upstreams original och använder GLM (`glm-4.6`, `glm-4.5-air`) i alla
+exempel. Vi kör i stället **DeepSeek V4 Flash** på haiku-tiern, med opus och
+sonnet i OAuth-passthrough till riktiga Anthropic.
+
+De lämnas medvetet oförändrade — de är upstream-spårade filer, och lokala
+redigeringar i dem ger konflikter vid varje `git merge upstream/main` utan att
+tillföra något. Vår faktiska konfiguration finns i `.env` per maskin, och
+avvikelserna dokumenteras här.
+
+| | Upstream-exempel | Vår drift |
+|---|---|---|
+| Haiku | `glm-4.6` via Z.AI | `deepseek-v4-flash` via `api.deepseek.com/anthropic` |
+| Opus | `glm-4.5-air` via Z.AI | OAuth-passthrough till Anthropic |
+| Sonnet | OAuth-passthrough | OAuth-passthrough till Anthropic |
+| `HOST` | `0.0.0.0` (hårdkodat) | `127.0.0.1` via `.env` |
+
+Routningen konfigureras i Claude Codes egen `~/.claude/settings.json` under
+`env` (`ANTHROPIC_BASE_URL` + `ANTHROPIC_DEFAULT_HAIKU_MODEL`), inte som
+Windows-miljövariabler på användar- eller maskinnivå. Den gäller därför enbart
+Claude Code — **inte** Claude Desktops egen chatt, som pratar direkt med
+claude.ai och aldrig passerar proxyn.
+
 ## Driftfälla på Windows: föräldralös process håller porten
 
 Den schemalagda uppgiften kör som `Gabri` med LogonType S4U, vilket placerar
