@@ -1,7 +1,9 @@
 @echo off
 REM Startar Claude Code-proxyn (Haiku-tier -> DeepSeek V4 Flash).
 REM Windows-motsvarighet till claude-code-proxy.service pa Hetzner.
-REM Startas av schemalagd uppgift "claude-code-proxy"; loggen skrivs om vid varje start.
+REM Startas av schemalagd uppgift "claude-code-proxy"; loggen appendas (inte
+REM skrivs om) sedan 2026-08-01 så proxy-usage-rapporten inte tappar data vid
+REM omstart. Loggen växer; ingen rotation än — övervakas via disk-grinden.
 REM Startbannern innehaller pilar (U+2192). Utan detta blir stdout cp1252
 REM vid omdirigering till fil och processen dor pa UnicodeEncodeError.
 set PYTHONUTF8=1
@@ -22,4 +24,4 @@ for /f "tokens=5" %%p in ('netstat -ano ^| findstr /c:"LISTENING" ^| findstr /c:
 )
 ping -n 3 127.0.0.1 >nul
 
-".venv\Scripts\python.exe" "proxy.py" > "proxy.log" 2>&1
+".venv\Scripts\python.exe" "proxy.py" >> "proxy.log" 2>&1
