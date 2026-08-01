@@ -43,8 +43,14 @@ import logging
 import asyncio
 import random
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging. Formatet innehaller datum+klockslag (ISO 8601) sa
+# proxy-usage-rapporten kan aggregera per dag. Andrad 2026-08-01 (atgard 14,
+# bor-punkt 5).
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s:%(name)s:%(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S%z",
+)
 logger = logging.getLogger(__name__)
 
 # Load .env file for provider configs
