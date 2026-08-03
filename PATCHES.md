@@ -7,6 +7,25 @@ patcharna kan omprövas eller skickas uppströms i stället för att glömmas bo
 Repot körs från `main` på samtliga maskiner (Hetzner, stationär, laptop).
 Uppströmssynk sker med `git fetch upstream && git merge upstream/main`.
 
+## Branch-tracking på kloner: `main` → `origin/main` (fork), inte `upstream/main`
+
+En klon ska ha `main` inställd att följa **forkens egna** `origin/main`, inte
+`upstream/main` (jodavan). Felaktig tracking ger två symtom som är lätta att
+missta för något annat:
+
+- **`hetzner-drift-check` rapporterar falskt "N opushade"** — den räknar
+  `HEAD ^@{u}`, och mot `upstream/main` (som saknar fork-patcharna) ser alla
+  fork-commits ut som opushade, trots att de ligger på `origin/main`.
+- **Daglig `git pull --ff-only` drar fel remote** — klonen uppdateras från
+  jodavan i stället för forken, så fork-ändringar synkas inte automatiskt.
+
+Korrekt konfiguration:
+
+    git branch --set-upstream-to=origin/main main
+
+`upstream`-remoten behålls för manuell uppströmssynk, men `main` ska aldrig
+följa den som tracking-branch.
+
 ## Patchar i `proxy.py`
 
 ### 1. `normalize_model_name()` — matcha modellnamn med och utan `[1m]`
@@ -103,4 +122,4 @@ anroparen dödats i stället.
 Hetzner är inte drabbad — där körs proxyn av en `systemd --user`-unit som
 hanterar processträdet korrekt vid `restart`.
 
-Senast uppdaterad: 2026-07-31.
+Senast uppdaterad: 2026-08-03.
