@@ -2,6 +2,37 @@
 
 Route **each Claude Code model tier** to **different providers**! Use [GLM](https://z.ai/subscribe?ic=CAO6LGU9S1) for Haiku/Opus and keep Sonnet on your [Claude](https://claude.ai/) subscription - all at the same time.
 
+## Faktisk uppsättning i denna fork (2026-08-09)
+
+Exemplen nedan är uppströms och använder GLM på Haiku/Opus. Så ser det **inte** ut här.
+
+```
+Claude Code UI                    Proxy Routes To
+─────────────────────────         ───────────────────────────────
+Haiku  (claude-haiku-*)           → Real Anthropic (OAuth)
+Opus   (claude-opus-*)            → Real Anthropic (OAuth)
+Sonnet (deepseek-v4-flash[1m])    → DeepSeek V4 Flash
+```
+
+**Haiku-facket måste lämnas tomt.** `WebSearch` och `WebFetch` körs på Haiku-tiern,
+inte på huvudmodellen. Sätts `ANTHROPIC_DEFAULT_HAIKU_MODEL` till ett modellnamn
+Anthropic inte känner igen avvisas webbverktygen med
+`There's an issue with the selected model (<namn>)` — och anropet når aldrig ens
+proxyn, eftersom namnet avvisas uppströms. Mätt 2026-08-09: med DeepSeek flyttad
+till Sonnet-facket fungerar `WebSearch` och DeepSeek-routningen samtidigt.
+
+**`[1m]`-suffixet är avsiktligt.** DeepSeek V4 Flash har 1M kontextfönster och 384K
+max output ([DeepSeek pricing](https://api-docs.deepseek.com/quick_start/pricing)).
+Utan suffix antar Claude Code 200k och auto-kompakterar fem gånger för tidigt.
+Claude Code strippar `[1m]` innan begäran skickas, och `normalize_model_name()`
+matchar båda formerna, så DeepSeek tar emot det rena namnet. `modelOverrides` löser
+inte detta — den mappar modell-id till provider-strängar och har inget
+fält för kontextfönster.
+
+Konfigurationen ligger i `.env` här (`SONNET_PROVIDER_*`) och i `~/.claude/settings.json`
+under `env` (`ANTHROPIC_BASE_URL` + `ANTHROPIC_DEFAULT_SONNET_MODEL`). Båda måste ange
+samma modellnamn — det är strängmatchningen i `get_provider_config()` som avgör routningen.
+
 ## Why This Exists
 
 Apparently I'm one of the "2%" of users that should encounter or be affected by Anthropic's new weekly limits. So I built this proxy to route certain models to LLM providers of your choice - welcome to the good ol days when we didn't need to worry about hitting our weekly limit. These models work with agents too!

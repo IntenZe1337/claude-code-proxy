@@ -24,3 +24,6 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Backupkopior av .env innehaller API-nycklar och far aldrig committas
+.env.bak*
