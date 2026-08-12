@@ -71,19 +71,22 @@ för formatet.
 ### `README.md` och `.env.example` speglar inte vår konfiguration
 
 Båda är upstreams original och använder GLM (`glm-4.6`, `glm-4.5-air`) i alla
-exempel. Vi kör i stället **DeepSeek V4 Flash** på haiku-tiern, med opus och
-sonnet i OAuth-passthrough till riktiga Anthropic.
+exempel. Vi kör i stället **DeepSeek V4** på Sonnet-facket (sedan 2026-08-09;
+dessförinnan Haiku-facket), med haiku och opus i OAuth-passthrough till riktiga
+Anthropic. Vilken DeepSeek-variant som gäller sätts per nod i `.env` — alla tre
+noderna kör `deepseek-v4-pro` sedan 2026-08-12.
 
-De lämnas medvetet oförändrade — de är upstream-spårade filer, och lokala
-redigeringar i dem ger konflikter vid varje `git merge upstream/main` utan att
-tillföra något. Vår faktiska konfiguration finns i `.env` per maskin, och
-avvikelserna dokumenteras här.
+`.env.example` lämnas medvetet oförändrad — den är upstream-spårad, och lokala
+redigeringar ger konflikter vid varje `git merge upstream/main` utan att tillföra
+något. `README.md` har däremot ett eget avsnitt om faktisk uppsättning högst upp,
+eftersom upstream-diagrammet där är direkt vilseledande om vår drift. Vår
+faktiska konfiguration finns i `.env` per maskin, och avvikelserna dokumenteras här.
 
 | | Upstream-exempel | Vår drift |
 |---|---|---|
-| Haiku | `glm-4.6` via Z.AI | `deepseek-v4-flash` via `api.deepseek.com/anthropic` |
+| Haiku | `glm-4.6` via Z.AI | OAuth-passthrough till Anthropic (facket måste vara tomt — `WebSearch`/`WebFetch` kör här) |
 | Opus | `glm-4.5-air` via Z.AI | OAuth-passthrough till Anthropic |
-| Sonnet | OAuth-passthrough | OAuth-passthrough till Anthropic |
+| Sonnet | OAuth-passthrough | `deepseek-v4-pro` via `api.deepseek.com/anthropic` |
 | `HOST` | `0.0.0.0` (hårdkodat) | `127.0.0.1` via `.env` |
 
 Routningen konfigureras i Claude Codes egen `~/.claude/settings.json` under

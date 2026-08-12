@@ -15,8 +15,8 @@ Sonnet (deepseek-v4-pro[1m])      → DeepSeek V4 Pro
 ```
 
 **Vilken DeepSeek-modell som ligger på Sonnet-facket sätts per nod** i `.env` plus
-`settings.json` — repot pinnar den inte. Stationären kör `deepseek-v4-pro` sedan
-2026-08-12; laptop och Hetzner kör fortfarande `deepseek-v4-flash`. Pro kostar
+`settings.json` — repot pinnar den inte. Alla tre noder (stationär, laptop, Hetzner)
+kör `deepseek-v4-pro` sedan 2026-08-12; dessförinnan `deepseek-v4-flash`. Pro kostar
 ca 3x Flash per token (`$0.435`/`$0.87` mot `$0.14`/`$0.28` per M in/ut).
 
 **Haiku-facket måste lämnas tomt.** `WebSearch` och `WebFetch` körs på Haiku-tiern,
