@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --disable-pip-version-check ruff
+          python -m pip install --disable-pip-version-check -r requirements.txt
+
+      # Kritisk delmängd som golv: syntaxfel, odefinierade namn och trasiga
+      # jämförelser. Repot har en ruff.toml, så full check körs också — proxyn
+      # är en enda fil och har ingen historisk stilskuld att gradvis beta av.
+      - name: Ruff critical subset
+        run: ruff check --select E9,F63,F7,F82 .
+
+      - name: Ruff full
+        run: ruff check .
+
+      # En proxy som inte importerar är en proxy som inte startar. Importen
+      # provar samtidigt att requirements.txt räcker för att ladda modulen —
+      # ett saknat beroende syns här i stället för vid nästa omstart på servern.
+      # proxy.py har inga modulnivå-exit; app byggs vid import.
+      - name: Import smoke
+        run: python -c "import proxy; assert proxy.app is not None; print('proxy importerar, app byggd')"
