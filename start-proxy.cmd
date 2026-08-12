@@ -1,5 +1,5 @@
 @echo off
-REM Startar Claude Code-proxyn (Haiku-tier -> DeepSeek V4 Flash).
+REM Startar Claude Code-proxyn. Modellen pa Sonnet-facket sitter i .env (per nod).
 REM Windows-motsvarighet till claude-code-proxy.service pa Hetzner.
 REM Startas av schemalagd uppgift "claude-code-proxy"; loggen appendas (inte
 REM skrivs om) sedan 2026-08-01 så proxy-usage-rapporten inte tappar data vid

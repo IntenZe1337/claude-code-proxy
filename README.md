@@ -2,7 +2,7 @@
 
 Route **each Claude Code model tier** to **different providers**! Use [GLM](https://z.ai/subscribe?ic=CAO6LGU9S1) for Haiku/Opus and keep Sonnet on your [Claude](https://claude.ai/) subscription - all at the same time.
 
-## Faktisk uppsättning i denna fork (2026-08-09)
+## Faktisk uppsättning i denna fork (2026-08-12)
 
 Exemplen nedan är uppströms och använder GLM på Haiku/Opus. Så ser det **inte** ut här.
 
@@ -11,8 +11,13 @@ Claude Code UI                    Proxy Routes To
 ─────────────────────────         ───────────────────────────────
 Haiku  (claude-haiku-*)           → Real Anthropic (OAuth)
 Opus   (claude-opus-*)            → Real Anthropic (OAuth)
-Sonnet (deepseek-v4-flash[1m])    → DeepSeek V4 Flash
+Sonnet (deepseek-v4-pro[1m])      → DeepSeek V4 Pro
 ```
+
+**Vilken DeepSeek-modell som ligger på Sonnet-facket sätts per nod** i `.env` plus
+`settings.json` — repot pinnar den inte. Stationären kör `deepseek-v4-pro` sedan
+2026-08-12; laptop och Hetzner kör fortfarande `deepseek-v4-flash`. Pro kostar
+ca 3x Flash per token (`$0.435`/`$0.87` mot `$0.14`/`$0.28` per M in/ut).
 
 **Haiku-facket måste lämnas tomt.** `WebSearch` och `WebFetch` körs på Haiku-tiern,
 inte på huvudmodellen. Sätts `ANTHROPIC_DEFAULT_HAIKU_MODEL` till ett modellnamn
@@ -21,8 +26,8 @@ Anthropic inte känner igen avvisas webbverktygen med
 proxyn, eftersom namnet avvisas uppströms. Mätt 2026-08-09: med DeepSeek flyttad
 till Sonnet-facket fungerar `WebSearch` och DeepSeek-routningen samtidigt.
 
-**`[1m]`-suffixet är avsiktligt.** DeepSeek V4 Flash har 1M kontextfönster och 384K
-max output ([DeepSeek pricing](https://api-docs.deepseek.com/quick_start/pricing)).
+**`[1m]`-suffixet är avsiktligt.** Både V4 Pro och V4 Flash har 1M kontextfönster och
+384K max output ([DeepSeek pricing](https://api-docs.deepseek.com/quick_start/pricing)).
 Utan suffix antar Claude Code 200k och auto-kompakterar fem gånger för tidigt.
 Claude Code strippar `[1m]` innan begäran skickas, och `normalize_model_name()`
 matchar båda formerna, så DeepSeek tar emot det rena namnet. `modelOverrides` löser
